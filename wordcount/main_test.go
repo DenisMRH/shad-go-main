@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	}())
 }
 
-func TestWordCount(t *testing.T) {
+func TestWordCount(t *testing.T) 	{
 	binary, err := binCache.GetBinary(wordcountImportPath)
 	require.NoError(t, err)
 
