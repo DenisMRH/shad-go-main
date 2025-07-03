@@ -1,9 +1,11 @@
 # Курс по Го в ШАД
 
-Проект можно открыть в любой go IDE с поддержкой модулей.
+📊 Yandex School of Data Analysis (YSDA) Tasks
+This repository contains my solutions to assignments from the Yandex School of Data Analysis (YSDA) program. I'm learning Go (Golang) and applying it to solve algorithmic, data analysis, and software engineering challenges.
 
-## Информация
+🔹 Topics: Algorithms, Data Structures, Concurrency, Optimization
+🔹 Goals: Improve Go skills, master YSDA curriculum, and build efficient solutions.
 
-- [Программа курса](docs/syllabus.md)
-- [Слайды](https://p.go.manytask.org/)
-- [Как прислать патч](CONTRIBUTING.md)
+🚀 Progress: Ongoing – more tasks and improvements coming soon!
+
+Feel free to explore, suggest optimizations, or connect if you're also learning Go/DS!
