@@ -6,153 +6,67 @@ import (
 	"strings"
 )
 
+var units = []string{"", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"}
+var tens = []string{"", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"}
+
 func Spell(n int64) string {
-	var b strings.Builder
+
+	fullNumber := []string{}
+
 	switch {
 	case n > 0:
 	case n < 0:
-		b.WriteString("minus ")
+		fullNumber = append(fullNumber, "minus")
 		n = -n
 	default:
-		b.WriteString("zero")
+		return "zero"
 	}
 
-	switch {
-	case n < 1000:
-		underThousand(&b, n)
-	case n > 999 && n < 1000000:
-		underThousand(&b, n/1000)
-		if n%1000 != 0 {
-			b.WriteString(" thousand ")
-			underThousand(&b, n%1000)
-		} else {
-			b.WriteString(" thousand")
-		}
+	scales := []struct {
+		val  int64
+		name string
+	}{
+		{1_000_000_000, "billion"},
+		{1_000_000, "million"},
+		{1_000, "thousand"},
+	}
 
-	case n > 999999 && n < 1000000000:
-
-		underThousand(&b, n/1000000)
-		if n%1000000 != 0 {
-			b.WriteString(" million ")
-			underThousand(&b, (n/1000)%1000)
-			if n%1000 != 0 {
-				b.WriteString(" thousand ")
-				underThousand(&b, n%1000)
-			} else {
-				b.WriteString(" thousand")
-			}
-		} else {
-			b.WriteString(" million")
-		}
-	case n > 999999999 && n < 1000000000000:
-		underThousand(&b, n/1000000000)
-		if n%1000000000 != 0 {
-			b.WriteString(" billion ")
-			underThousand(&b, (n/1000000)%1000)
-			if n%1000000 != 0 {
-				b.WriteString(" million ")
-				underThousand(&b, (n/1000)%1000)
-				if n%1000 != 0 {
-					b.WriteString(" thousand ")
-					underThousand(&b, n%1000)
-				} else {
-					b.WriteString(" thousand")
-				}
-			} else {
-				b.WriteString(" million")
-			}
-		} else {
-			b.WriteString(" billion")
+	for _, scale := range scales {
+		if n >= scale.val {
+			fullNumber = append(fullNumber, underThousand(n/scale.val)...)
+			fullNumber = append(fullNumber, scale.name)
+			n %= scale.val
 		}
 	}
 
-	return b.String()
+	if n > 0 {
+		fullNumber = append(fullNumber, underThousand(n)...)
+	}
+
+	return strings.Join(fullNumber, " ")
 }
 
-func underTwenty(b *strings.Builder, n int64) {
-	switch n {
-	case 1:
-		b.WriteString("one")
-	case 2:
-		b.WriteString("two")
-	case 3:
-		b.WriteString("three")
-	case 4:
-		b.WriteString("four")
-	case 5:
-		b.WriteString("five")
-	case 6:
-		b.WriteString("six")
-	case 7:
-		b.WriteString("seven")
-	case 8:
-		b.WriteString("eight")
-	case 9:
-		b.WriteString("nine")
-	case 10:
-		b.WriteString("ten")
-	case 11:
-		b.WriteString("eleven")
-	case 12:
-		b.WriteString("twelve")
-	case 13:
-		b.WriteString("thirteen")
-	case 14:
-		b.WriteString("fourteen")
-	case 15:
-		b.WriteString("fifteen")
-	case 16:
-		b.WriteString("sixteen")
-	case 17:
-		b.WriteString("seventeen")
-	case 18:
-		b.WriteString("eighteen")
-	case 19:
-		b.WriteString("nineteen")
-	}
-}
-
-func underHundred(b *strings.Builder, n int64) {
+func underHundred(n int64) string {
 	switch {
-	case n < 20:
-		underTwenty(b, n)
-	case n > 19 && n < 30:
-		b.WriteString("twenty")
-	case n > 29 && n < 40:
-		b.WriteString("thirty")
-	case n > 39 && n < 50:
-		b.WriteString("forty")
-	case n > 49 && n < 60:
-		b.WriteString("fifty")
-	case n > 59 && n < 70:
-		b.WriteString("sixty")
-	case n > 69 && n < 80:
-		b.WriteString("seventy")
-	case n > 79 && n < 90:
-		b.WriteString("eighty")
-	case n > 89 && n < 100:
-		b.WriteString("ninety")
-
-	}
-	if n%10 != 0 && n > 19 {
-		b.WriteString("-")
-		underTwenty(b, n%10)
-	}
-}
-
-func underThousand(b *strings.Builder, n int64) {
-	switch {
-	case n > 99:
-		underTwenty(b, n/100)
-		b.WriteString(" hundred")
-		if n%100 != 0 {
-			b.WriteString(" ")
-			underHundred(b, n%100)
-		}
-	case n == 1000:
-		b.WriteString(" thousand")
+	case n%10 != 0 && n > 19:
+		return tens[n/10] + "-" + units[n%10]
+	case n%10 == 0 && n > 19:
+		return tens[n/10]
 	default:
-		underHundred(b, n)
-	}
+		return units[n]
 
+	}
+}
+
+func underThousand(n int64) []string {
+	switch {
+	case n < 100:
+		return []string{underHundred(n)}
+	case n > 99 && n%100 != 0:
+		return []string{units[n/100], "hundred", underHundred(n % 100)}
+	case n > 99 && n%100 == 0:
+		return []string{units[n/100], "hundred"}
+	default:
+		return nil
+	}
 }
