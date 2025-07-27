@@ -3,17 +3,30 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
 
 type Evaluator struct {
-	stack []int
+	stack   []int
+	command map[string]func()
 }
 
 // NewEvaluator creates evaluator.
 func NewEvaluator() *Evaluator {
-	return &Evaluator{}
+	e := &Evaluator{
+		stack:   []int{},
+		command: make(map[string]func()),
+	}
+	addCommands(e)
+	return e
+}
+
+func addCommands(e *Evaluator) {
+	e.command["+"] = func() {
+		fmt.Println("test")
+	}
 }
 
 // Process evaluates sequence of words or definition.
@@ -26,6 +39,12 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 		lowerWord := strings.ToLower(word)
 		if number, err := strconv.Atoi(lowerWord); err == nil {
 			e.stack = append(e.stack, number)
+			continue
+		}
+
+		if e.command[lowerWord] != nil {
+			action := e.command[lowerWord]
+			action()
 		}
 	}
 
