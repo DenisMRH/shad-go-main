@@ -4,9 +4,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
+
+var underCommand = make(map[string][]string)
 
 type Evaluator struct {
 	stack   []int
@@ -103,51 +106,53 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 	words := strings.Fields(row)
 
 	if words[0] == ":" {
-		e.command[words[1]] = func(*Evaluator) error {
-			e.Test(words[2:])
-			return nil
-		}
-		goto popa
-	}
+		underCommand[words[1]] = declarationCommand(words)
+		fmt.Println(underCommand[words[1]])
+	} else {
+		for _, word := range words {
 
-	for _, word := range words {
+			lowerWord := strings.ToLower(word)
 
-		lowerWord := strings.ToLower(word)
-
-		if number, err := strconv.Atoi(lowerWord); err == nil {
-			e.stack = append(e.stack, number)
-			continue
-		}
-
-		if action, ok := e.command[lowerWord]; ok {
-			if err := action(e); err != nil {
-				return e.stack, err
+			if number, err := strconv.Atoi(lowerWord); err == nil {
+				e.stack = append(e.stack, number)
+				continue
 			}
-		}
 
+			if underCommand, ok := underCommand[word]; ok {
+				for _, word := range underCommand {
+
+					lowerWord := strings.ToLower(word)
+					if number, err := strconv.Atoi(lowerWord); err == nil {
+						e.stack = append(e.stack, number)
+						continue
+					}
+					if action, ok := e.command[lowerWord]; ok {
+						if err := action(e); err != nil {
+							return e.stack, err
+						}
+					}
+
+				}
+			}
+
+			if action, ok := e.command[lowerWord]; ok {
+				if err := action(e); err != nil {
+					return e.stack, err
+				}
+			}
+
+		}
 	}
-popa:
 	return e.stack, nil
 }
 
-func (e *Evaluator) Test(words []string) error {
-
-	for _, word := range words {
-
-		lowerWord := strings.ToLower(word)
-
-		if number, err := strconv.Atoi(lowerWord); err == nil {
-			e.stack = append(e.stack, number)
-			continue
+func declarationCommand(words []string) (rowUnderCommand []string) {
+	for i := 2; i < len(words); i++ {
+		if _, ok := underCommand[words[i]]; !ok {
+			rowUnderCommand = append(rowUnderCommand, words[i])
+		} else {
+			rowUnderCommand = append(rowUnderCommand, underCommand[words[i]]...)
 		}
-
-		if action, ok := e.command[lowerWord]; ok {
-			if err := action(e); err != nil {
-				return err
-			}
-		}
-
 	}
-
-	return nil
+	return
 }
