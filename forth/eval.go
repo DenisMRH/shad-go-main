@@ -3,29 +3,33 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
 
 type Evaluator struct {
 	stack   []int
-	command map[string]func()
+	command map[string]func(*Evaluator)
 }
 
 // NewEvaluator creates evaluator.
 func NewEvaluator() *Evaluator {
 	e := &Evaluator{
 		stack:   []int{},
-		command: make(map[string]func()),
+		command: make(map[string]func(*Evaluator)),
 	}
 	addCommands(e)
 	return e
 }
 
 func addCommands(e *Evaluator) {
-	e.command["+"] = func() {
-		fmt.Println("test")
+	e.command["+"] = func(*Evaluator) {
+		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] + e.stack[len(e.stack)-1]
+		e.stack = e.stack[:len(e.stack)-1]
+	}
+	e.command["-"] = func(*Evaluator) {
+		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] - e.stack[len(e.stack)-1]
+		e.stack = e.stack[:len(e.stack)-1]
 	}
 }
 
@@ -42,9 +46,8 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 			continue
 		}
 
-		if e.command[lowerWord] != nil {
-			action := e.command[lowerWord]
-			action()
+		if action, ok := e.command[lowerWord]; ok {
+			action(e)
 		}
 	}
 
