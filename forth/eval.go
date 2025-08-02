@@ -4,7 +4,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -14,6 +13,7 @@ var underCommand = make(map[string][]string)
 type Evaluator struct {
 	stack   []int
 	command map[string]func(*Evaluator) error
+	underCommand map[string][]string
 }
 
 // NewEvaluator creates evaluator.
@@ -104,11 +104,15 @@ func addCommands(e *Evaluator) {
 // Returns resulting stack state and an error.
 func (e *Evaluator) Process(row string) ([]int, error) {
 	words := strings.Fields(row)
-
 	if words[0] == ":" {
-		underCommand[words[1]] = declarationCommand(words)
-		fmt.Println(underCommand[words[1]])
+		keyWord := strings.ToLower(words[1])
+		if _, err := strconv.Atoi(keyWord); err != nil {
+			underCommand[keyWord] = declarationCommand(words)
+		} else {
+			return e.stack, errors.New("нельзя переопределять числа")
+		}
 	} else {
+	firstfor:
 		for _, word := range words {
 
 			lowerWord := strings.ToLower(word)
@@ -118,9 +122,8 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 				continue
 			}
 
-			if underCommand, ok := underCommand[word]; ok {
+			if underCommand, ok := underCommand[lowerWord]; ok {
 				for _, word := range underCommand {
-
 					lowerWord := strings.ToLower(word)
 					if number, err := strconv.Atoi(lowerWord); err == nil {
 						e.stack = append(e.stack, number)
@@ -133,25 +136,33 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 					}
 
 				}
+				continue firstfor
 			}
 
-			if action, ok := e.command[lowerWord]; ok {
+			if action, ok2 := e.command[lowerWord]; ok2 {
 				if err := action(e); err != nil {
 					return e.stack, err
 				}
 			}
+			_, ok := e.command[lowerWord]
+			_, ok1 := underCommand[lowerWord]
+			if !ok && !ok1 {
+				return e.stack, errors.New("нет такой комманды: " + lowerWord)
+			}
 
 		}
 	}
+
 	return e.stack, nil
 }
 
 func declarationCommand(words []string) (rowUnderCommand []string) {
 	for i := 2; i < len(words); i++ {
-		if _, ok := underCommand[words[i]]; !ok {
-			rowUnderCommand = append(rowUnderCommand, words[i])
+		lowerWord := strings.ToLower(words[i])
+		if _, ok := underCommand[lowerWord]; !ok {
+			rowUnderCommand = append(rowUnderCommand, lowerWord)
 		} else {
-			rowUnderCommand = append(rowUnderCommand, underCommand[words[i]]...)
+			rowUnderCommand = append(rowUnderCommand, underCommand[lowerWord]...)
 		}
 	}
 	return
