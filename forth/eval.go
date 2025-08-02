@@ -78,8 +78,6 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 		if action, ok := e.command[lowerWord]; ok {
 			if err := action(e); err != nil {
 				return e.stack, err
-			} else {
-				action(e)
 			}
 		}
 	}
