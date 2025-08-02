@@ -60,6 +60,25 @@ func addCommands(e *Evaluator) {
 			return errors.New("на ноль делить нельзя")
 		}
 	}
+
+	e.command["swap"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было хотябы два числа")
+		}
+		aftLst := e.stack[len(e.stack)-2]
+		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-1]
+		e.stack[len(e.stack)-1] = aftLst
+		return nil
+	}
+
+	e.command["over"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было хотябы одно число")
+		}
+		e.stack = append(e.stack, e.stack[len(e.stack)-2])
+		return nil
+	}
+
 	e.command["drop"] = func(*Evaluator) error {
 		if len(e.stack) < 1 {
 			return errors.New("для выполнения этой команды требуется чтобы в стеке было хотябы одно число")
@@ -74,6 +93,7 @@ func addCommands(e *Evaluator) {
 		e.stack = append(e.stack, e.stack[len(e.stack)-1])
 		return nil
 	}
+
 }
 
 // Process evaluates sequence of words or definition.
@@ -82,8 +102,18 @@ func addCommands(e *Evaluator) {
 func (e *Evaluator) Process(row string) ([]int, error) {
 	words := strings.Fields(row)
 
+	if words[0] == ":" {
+		e.command[words[1]] = func(*Evaluator) error {
+			e.Test(words[2:])
+			return nil
+		}
+		goto popa
+	}
+
 	for _, word := range words {
+
 		lowerWord := strings.ToLower(word)
+
 		if number, err := strconv.Atoi(lowerWord); err == nil {
 			e.stack = append(e.stack, number)
 			continue
@@ -94,7 +124,30 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 				return e.stack, err
 			}
 		}
+
+	}
+popa:
+	return e.stack, nil
+}
+
+func (e *Evaluator) Test(words []string) error {
+
+	for _, word := range words {
+
+		lowerWord := strings.ToLower(word)
+
+		if number, err := strconv.Atoi(lowerWord); err == nil {
+			e.stack = append(e.stack, number)
+			continue
+		}
+
+		if action, ok := e.command[lowerWord]; ok {
+			if err := action(e); err != nil {
+				return err
+			}
+		}
+
 	}
 
-	return e.stack, nil
+	return nil
 }
