@@ -28,7 +28,7 @@ func NewEvaluator() *Evaluator {
 func addCommands(e *Evaluator) {
 	e.command["+"] = func(*Evaluator) error {
 		if len(e.stack) < 2 {
-			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более двух")
 		}
 		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] + e.stack[len(e.stack)-1]
 		e.stack = e.stack[:len(e.stack)-1]
@@ -36,7 +36,7 @@ func addCommands(e *Evaluator) {
 	}
 	e.command["-"] = func(*Evaluator) error {
 		if len(e.stack) < 2 {
-			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более двух")
 		}
 		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] - e.stack[len(e.stack)-1]
 		e.stack = e.stack[:len(e.stack)-1]
@@ -44,7 +44,7 @@ func addCommands(e *Evaluator) {
 	}
 	e.command["*"] = func(*Evaluator) error {
 		if len(e.stack) < 2 {
-			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более двух")
 		}
 		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] * e.stack[len(e.stack)-1]
 		e.stack = e.stack[:len(e.stack)-1]
@@ -52,7 +52,7 @@ func addCommands(e *Evaluator) {
 	}
 	e.command["/"] = func(*Evaluator) error {
 		if len(e.stack) < 2 {
-			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более двух")
 		}
 		if e.stack[len(e.stack)-1] != 0 {
 			e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] / e.stack[len(e.stack)-1]
@@ -111,41 +111,29 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 			return e.stack, errors.New("нельзя переопределять числа")
 		}
 	} else {
-	firstfor:
 		for _, word := range words {
 
 			lowerWord := strings.ToLower(word)
 
 			if number, err := strconv.Atoi(lowerWord); err == nil {
 				e.stack = append(e.stack, number)
-				continue
-			}
-
-			if underCommand, ok := e.underCommand[lowerWord]; ok {
+			} else if underCommand, ok := e.underCommand[lowerWord]; ok {
 				for _, word := range underCommand {
 					lowerWord := strings.ToLower(word)
 					if number, err := strconv.Atoi(lowerWord); err == nil {
 						e.stack = append(e.stack, number)
-						continue
-					}
-					if action, ok := e.command[lowerWord]; ok {
+					} else if action, ok := e.command[lowerWord]; ok {
 						if err := action(e); err != nil {
 							return e.stack, err
 						}
 					}
 
 				}
-				continue firstfor
-			}
-
-			if action, ok2 := e.command[lowerWord]; ok2 {
+			} else if action, ok2 := e.command[lowerWord]; ok2 {
 				if err := action(e); err != nil {
 					return e.stack, err
 				}
-			}
-			_, ok := e.command[lowerWord]
-			_, ok1 := e.underCommand[lowerWord]
-			if !ok && !ok1 {
+			} else {
 				return e.stack, errors.New("нет такой комманды: " + lowerWord)
 			}
 
