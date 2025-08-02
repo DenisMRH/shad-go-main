@@ -3,33 +3,62 @@
 package main
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
 
 type Evaluator struct {
 	stack   []int
-	command map[string]func(*Evaluator)
+	command map[string]func(*Evaluator) error
 }
 
 // NewEvaluator creates evaluator.
 func NewEvaluator() *Evaluator {
 	e := &Evaluator{
 		stack:   []int{},
-		command: make(map[string]func(*Evaluator)),
+		command: make(map[string]func(*Evaluator) error),
 	}
 	addCommands(e)
 	return e
 }
 
 func addCommands(e *Evaluator) {
-	e.command["+"] = func(*Evaluator) {
+	e.command["+"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+		}
 		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] + e.stack[len(e.stack)-1]
 		e.stack = e.stack[:len(e.stack)-1]
+		return nil
 	}
-	e.command["-"] = func(*Evaluator) {
+	e.command["-"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+		}
 		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] - e.stack[len(e.stack)-1]
 		e.stack = e.stack[:len(e.stack)-1]
+		return nil
+	}
+	e.command["*"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+		}
+		e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] * e.stack[len(e.stack)-1]
+		e.stack = e.stack[:len(e.stack)-1]
+		return nil
+	}
+	e.command["/"] = func(*Evaluator) error {
+		if len(e.stack) < 2 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было более 2 чисел")
+		}
+		if e.stack[len(e.stack)-1] != 0 {
+			e.stack[len(e.stack)-2] = e.stack[len(e.stack)-2] / e.stack[len(e.stack)-1]
+			e.stack = e.stack[:len(e.stack)-1]
+			return nil
+		} else {
+			return errors.New("на ноль делить нельзя")
+		}
 	}
 }
 
@@ -47,7 +76,11 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 		}
 
 		if action, ok := e.command[lowerWord]; ok {
-			action(e)
+			if err := action(e); err != nil {
+				return e.stack, err
+			} else {
+				action(e)
+			}
 		}
 	}
 
