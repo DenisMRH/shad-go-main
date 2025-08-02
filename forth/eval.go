@@ -60,6 +60,20 @@ func addCommands(e *Evaluator) {
 			return errors.New("на ноль делить нельзя")
 		}
 	}
+	e.command["drop"] = func(*Evaluator) error {
+		if len(e.stack) < 1 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было хотябы одно число")
+		}
+		e.stack = e.stack[:len(e.stack)-1]
+		return nil
+	}
+	e.command["dup"] = func(*Evaluator) error {
+		if len(e.stack) < 1 {
+			return errors.New("для выполнения этой команды требуется чтобы в стеке было хотябы одно число")
+		}
+		e.stack = append(e.stack, e.stack[len(e.stack)-1])
+		return nil
+	}
 }
 
 // Process evaluates sequence of words or definition.
